@@ -1,7 +1,10 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
+#include <string>
 #include <algorithm>
 #include <iomanip>
+
 
 // Функция для ввода чисел
 std::vector<int> input_numbers(int count) {
@@ -56,21 +59,67 @@ void show_histogram_text(const std::vector<int>& histogram) {
     }
 }
 
+void svg_begin(double width, double height, std::ofstream& out) {
+    out << "<?xml version='1.0' encoding='UTF-8'?>\n";
+    out << "<svg xmlns='http://www.w3.org/2000/svg' width='" << width << "' height='" << height << "'>\n";
+}
+
+void svg_end(std::ofstream& out) {
+    out << "</svg>\n";
+}
+
+void svg_rect(double x, double y, double width, double height, std::string stroke, std::string fill, std::ofstream& out) {
+    out << "<rect x='" << x << "' y='" << y << "' width='" << width << "' height='" << height << "' stroke='" << stroke << "' fill='" << fill << "' />\n";
+}
+
+void svg_text(double left, double baseline, std::string text, std::ofstream& out) {
+    out << "<text x='" << left << "' y='" << baseline << "'>" << text << "</text>\n";
+}
+
+void show_histogram_svg(const std::vector<int>& bins, const std::vector<std::string>& colors) {
+    const auto IMAGE_WIDTH = 400;
+    const auto IMAGE_HEIGHT = 300;
+    const auto TEXT_LEFT = 20;
+    const auto TEXT_BASELINE = 20;
+    const auto TEXT_WIDTH = 50;
+    const auto BIN_HEIGHT = 30;
+
+    std::ofstream svg_file;
+    svg_file.open("histogram.svg");
+
+    svg_begin(IMAGE_WIDTH, IMAGE_HEIGHT, svg_file);
+
+    double top = 0;
+    for (size_t i = 0; i < bins.size(); ++i) {
+        const double bin_width = 10 * bins[i];
+        svg_text(TEXT_LEFT, top + TEXT_BASELINE, std::to_string(bins[i]), svg_file);
+        svg_rect(TEXT_WIDTH, top, bin_width, BIN_HEIGHT, "black", colors[i], svg_file);
+        top += BIN_HEIGHT;
+    }
+
+    svg_end(svg_file);
+    svg_file.close();
+}
+
 int main() {
-    // Ввод данных
     int count;
     std::cout << "Enter the number of elements: ";
     std::cin >> count;
     std::vector<int> numbers = input_numbers(count);
 
-    int bins;
+    int bins_count;
     std::cout << "Enter the number of bins: ";
-    std::cin >> bins;
-    std::vector<int> histogram = calculate_histogram(numbers, bins);
+    std::cin >> bins_count;
 
-    // Вывод данных
-    std::cout << "Histogram:\n";
-    show_histogram_text(histogram);
+    std::vector<std::string> colors(bins_count);
+    for (int i = 0; i < bins_count; ++i) {
+        std::cout << "Enter color for bin " << i + 1 << ": ";
+        std::cin >> colors[i];
+    }
+
+    std::vector<int> histogram = calculate_histogram(numbers, bins_count);
+
+    show_histogram_svg(histogram, colors);
 
     return 0;
 }
